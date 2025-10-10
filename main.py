@@ -36,3 +36,8 @@ async def calculate_similarity(
         "similarity": similarity
     })
 
+@app.get("/health")
+def health():
+    return {
+        "status": 'OK'
+    }
