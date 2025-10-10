@@ -36,6 +36,10 @@ async def calculate_similarity(
         "similarity": similarity
     })
 
+@app.get("/")
+def root():
+    return {"message": "Welcome to the root route!"}
+
 @app.get("/health")
 def health():
     return {
