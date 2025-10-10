@@ -1,6 +1,7 @@
 tensorflow==2.18.0
 keras
 fastapi
+mangum
 uvicorn
 passlib[bcrypt]
 python-multipart

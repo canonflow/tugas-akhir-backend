@@ -1,6 +1,7 @@
 from typing import Annotated
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.responses import JSONResponse
+from mangum import Mangum
 import random
 
 app = FastAPI();
@@ -45,3 +46,5 @@ def health():
     return {
         "status": 'OK'
     }
+
+handler = Mangum(app, lifespan="off")
