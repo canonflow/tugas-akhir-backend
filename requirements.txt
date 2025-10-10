@@ -9,5 +9,4 @@ numpy
 pandas
 matplotlib
 scikit-learn
-Augmentor
 pillow
