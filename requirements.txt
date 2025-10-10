@@ -1,0 +1,13 @@
+tensorflow==2.18.0
+keras
+fastapi
+uvicorn
+passlib[bcrypt]
+python-multipart
+python-dotenv
+numpy
+pandas
+matplotlib
+scikit-learn
+Augmentor
+pillow
