@@ -11,3 +11,4 @@ matplotlib
 scikit-learn
 pillow
 opencv-python
+Augmentor

@@ -1,0 +1,8 @@
+Category,Reference Number,Reference Path,Sketch Path,Score
+botol,1,data/dataset\valid\botol\ref1\ref.png,data/dataset\valid\botol\ref1\sketches/13kt42osz1/wfhbbbgxv0_W4 - Hermawanto.png,69
+buah,1,data/dataset\valid\buah\ref1\ref.png,data/dataset\valid\buah\ref1\sketches/adriano/Gambar-W3 - Adriano.png,64
+buah,1,data/dataset\valid\buah\ref1\ref.png,data/dataset\valid\buah\ref1\sketches/michael/Gambar-W3 - Michael.png,48
+buah,2,data/dataset\valid\buah\ref2\ref.png,data/dataset\valid\buah\ref2\sketches/alexander/Gambar-W3 - Alexander.png,67
+buah,2,data/dataset\valid\buah\ref2\ref.png,data/dataset\valid\buah\ref2\sketches/eliz/Gambar-W3 - Eliz.png,74
+rubik,1,data/dataset\valid\rubik\ref1\ref.png,data/dataset\valid\rubik\ref1\sketches/alexander/W4 - Alexander-Edgar.png,59
+rubik,1,data/dataset\valid\rubik\ref1\ref.png,data/dataset\valid\rubik\ref1\sketches/eliz/W4 - Elisabeth.png,74
