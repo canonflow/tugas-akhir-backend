@@ -2,15 +2,26 @@ from typing import Annotated
 from fastapi import FastAPI, UploadFile, File, HTTPException, Form, BackgroundTasks
 from fastapi.responses import JSONResponse
 # from api.core.preprocessing import preprocessing_pipeline
-# from api.core.siamese import SiameseModel
+from api.core.siamese import SiameseModel, build_siamese, build_callbacks
 from api.core.retrain import move_uploaded_file
 from api.core.retrain import augment
 from api.core.retrain import csv
 from api.helper import helper
 import shutil
 import pandas as pd
+import numpy as np
+from sklearn.metrics import r2_score, mean_squared_error
 import math
 import os
+import random
+from api.core.preprocessing import preprocessing_pipeline, create_processed_dataframe_from_csv
+from api.core.siamese import (
+    ReduceMeanLayer, 
+    ReduceMaxLayer, 
+    L2NormalizationLayer, 
+    CosineSimilarityLayer,
+    pearson_correlation_metric
+)
 
 app = FastAPI();
 
@@ -85,6 +96,14 @@ def health():
         "status": 'OK'
     }
 
+def set_seeds(seed=42):
+    np.random.seed(seed)
+    random.seed(seed)
+    tf.random.set_seed(seed)
+    # For GPU determinism (may slow down training)
+    tf.config.experimental.enable_op_determinism()
+    tf.config.optimizer.set_jit(False)
+
 def retrain_background(
     new_reference_name: str,
     reference_image: UploadFile,
@@ -98,6 +117,9 @@ def retrain_background(
             detail="length of sketches and scores must be equal"
         )
     
+    # TODO: Bikin Record Baru di Supabase
+    # TODO: Tmambah Try-Catch
+
     sketches_data = []
     scores_data = []
 
@@ -193,4 +215,74 @@ def retrain_background(
     positive_test_df.to_csv("data/csv/positive_test_pairs.csv", index=False)
 
     print(f">> Successfully created test pairs (only positive)")
+
+
+    print("\n============================ PROCESS AND LOAD DATASET ============================")
+    X_train, y_train = create_processed_dataframe_from_csv('train', 256)
+    print(">> Processing Train Pairs")
+
+    X_valid, y_valid = create_processed_dataframe_from_csv("valid", 256)
+    print(">> Processing Valid Pairs")
+
+    print("\n============================ SETUP CALLBACK ============================")
+    callbacks = build_callbacks()
+
+    print("\n============================ SETUP MODEL ============================")
+    siamese_model = build_siamese()
+    history = siamese_model.fit(
+        x=X_train,
+        y=y_train,
+        validation_data=(X_valid, y_valid),
+        batch_size=32,
+        callbacks=callbacks,
+        epochs=500,
+        verbose=1
+    )
     
+    print("\n============================ GET TRAINING METRICS ============================")
+    '''
+    {
+        'loss': 0.421,
+        'mse': 0.421,
+        'pearson_correlation_metric': 0.8,
+        'r2_score': 0.532,
+        'val_loss': 0.321,
+        'val_mse': 0.321,
+        'val_pearson_correlation_metric': 0.5,
+        'val_r2_score': 0.232,
+    }
+    '''
+    latest_metrics = {
+        metric: values[-1] for metric, values in history.history.items()
+    }
+    print(f">> Training Metrics: {latest_metrics}")
+
+    print("\n============================ PREDICT TEST SET ============================")
+    X_test, y_test = create_processed_dataframe_from_csv('test', 256)
+    predictions = siamese_model.predict(X_test, batch_size=32, verbose=1)
+
+    if predictions.ndim > 1 and predictions.shape[1] == 1:
+        predictions = predictions.flatten()
+
+
+    print("\n============================ GET PREDICTION METRIC ============================")
+    test_r2 = r2_score(y_test, predictions)
+    print(f">> Test R2 Score: {test_r2}")
+    test_pearson_correlation_metric = np.corrcoef(y_test, predictions)
+    print(f">> Test Pearson: {test_pearson_correlation_metric}")
+    test_mse = mean_squared_error(y_test, predictions)
+    print(f">> Test MSE: {test_mse}")
+
+    latest_metrics['test_r2'] = test_r2
+    latest_metrics['test_pearson_correlation_metric'] = test_pearson_correlation_metric
+    latest_metrics['test_mse'] = test_mse
+
+    print("\n============================ SAVE MODEL ============================")
+    siamese_model.save("model/siamese_model.keras")
+    
+    print("\n============================ CALL SUPABASE ============================")
+    ''' NOTE
+    1. Update data kalau status training untuk referensi baru sudah berhasil 'success'
+    2. Masukkin Metrics-nya untuk model terbaru ke Supabase
+    3. Jangan Lupa Try-Catch, kalau ada error, update status 'failed'
+    '''
