@@ -12,3 +12,4 @@ scikit-learn
 pillow
 opencv-python
 Augmentor
+supabase

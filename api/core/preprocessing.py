@@ -77,10 +77,13 @@ def create_processed_dataframe_from_csv(dir_type, image_size):
         raise Exception("'dir_type' must be either train, valid, or test!")
     
     positive_df = pd.read_csv(DATASET_PATH[dir_type]['positive'])
-    negative_df = pd.read_csv(DATASET_PATH[dir_type]['negative'])
 
-    df = pd.concat([positive_df, negative_df], ignore_index=True)
-    df = df.sampel(frac=1).reset_index(drop=True)
+    if dir_type != 'test':
+        negative_df = pd.read_csv(DATASET_PATH[dir_type]['negative'])
+        df = pd.concat([positive_df, negative_df], ignore_index=True)
+        df = df.sample(frac=1).reset_index(drop=True)
+    else:
+        df = positive_df
     print("--- Load the CSV file")
 
     processed_data = []

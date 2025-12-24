@@ -1,0 +1,4 @@
+7 Desember 2025
+
+============================ GET TRAINING METRICS ============================
+>> Training Metrics: {'loss': 8.463302612304688, 'mse': 148.20205688476562, 'pearson_correlation_metric': 0.9535965919494629, 'r2_score': 0.871374785900116, 'val_loss': 4.0358099937438965, 'val_mse': 89.86604309082031, 'val_pearson_correlation_metric': 0.7361559867858887, 'val_r2_score': 0.6881071925163269, 'learning_rate': 1.0000000116860974e-07}
