@@ -1,5 +1,5 @@
 from typing import Annotated
-from fastapi import FastAPI, UploadFile, File, HTTPException, Form, BackgroundTasks, Depends
+from fastapi import FastAPI, UploadFile, File, HTTPException, Form, BackgroundTasks, Depends, status
 from fastapi.responses import JSONResponse
 # from api.core.preprocessing import preprocessing_pipeline
 from api.core.siamese import SiameseModel, build_siamese, build_callbacks
@@ -87,6 +87,23 @@ def retrain(
         )
     # TODO: Cek apakah new_reference_name sudah pernah ada sebelumnya
     #! Cek di Supabase (huruf kecil semua)
+    print(f"LEN SCORES: {len(scores)}")
+    print(f"LEN SKETCHES: {len(sketches)}")
+    print(f"NEW REFERENCE NAME: {new_reference_name}")
+    print(f"REFERENCE IMAGE FILENAME: {reference_image.filename}")
+
+    if len(sketches) != len(scores):
+        print("!!! ERROR LEN SKETCHES != SCORES !!!")
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={
+                "message": "ERROR",
+            }
+        )
+        # return HTTPException(
+        #     status_code=400,
+        #     detail="length of sketches and scores must be equal"
+        # )
 
     background_tasks.add_task(
         retrain_background, 
@@ -128,6 +145,7 @@ async def retrain_background(
 ):
     # TODO: Check length of sketches and scores
     if len(sketches) != len(scores):
+        print("!!! ERROR LEN SKETCHES != SCORES !!!")
         return HTTPException(
             status_code=400,
             detail="length of sketches and scores must be equal"
