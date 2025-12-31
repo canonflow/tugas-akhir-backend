@@ -61,7 +61,7 @@ async def calculate_similarity(
 
     # TODO: Calculate the similarity between reference image and sketch image
     siamese_model = SiameseModel(reference_img, sketch_img)
-    similarity = float(siamese_model.calculate_similarity())
+    similarity = round(float(siamese_model.calculate_similarity()), 2)
     print(f"Similarity: {similarity}")
 
     # TODO: Send the response
