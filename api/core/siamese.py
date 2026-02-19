@@ -164,13 +164,64 @@ def build_efficientnetv2m_subnetwork(input_shape=256):
 
     return tf.keras.Model(base.input, fc, name="feature_extractor")
 
+def build_convnext_subnetwork(input_shape=224):
+    base = tf.keras.applications.ConvNeXtSmall(
+        include_top=False,
+        weights='imagenet',
+        input_shape=(input_shape, input_shape, 3)
+    )
+
+    base.trainable = False
+
+    x = base.output
+
+    # Spatial Attention mechanism
+    avg_pool = ReduceMeanLayer(axis=-1, keepdims=True)(x)
+    max_pool = ReduceMaxLayer(axis=-1, keepdims=True)(x)
+
+    concat = tf.keras.layers.Concatenate(axis=-1)([avg_pool, max_pool])
+    attention = tf.keras.layers.Conv2D(
+        filters=1,
+        kernel_size=7,
+        strides=1,
+        padding='same',
+        activation='sigmoid',
+    )(concat)
+
+    x = tf.keras.layers.Multiply()([x, attention])
+
+    # Hybrid Pooling
+    avg_pool = tf.keras.layers.GlobalAveragePooling2D()(x)
+    max_pool = tf.keras.layers.GlobalMaxPooling2D()(x)
+    hybrid_pool = tf.keras.layers.Concatenate()([avg_pool, max_pool])
+
+    # TODO: [UPDATE - After _4_with_full_cbam] Dense layers - Corrected order: Dense → BN → Activation → Dropout
+    fc = tf.keras.layers.Dense(1024, kernel_regularizer=tf.keras.regularizers.l2(1e-4))(hybrid_pool)
+    fc = tf.keras.layers.BatchNormalization()(fc)
+    fc = tf.keras.layers.Activation('relu')(fc)
+    fc = tf.keras.layers.Dropout(0.5)(fc)
+
+    fc = tf.keras.layers.Dense(512, kernel_regularizer=tf.keras.regularizers.l2(1e-4))(fc)
+    fc = tf.keras.layers.BatchNormalization()(fc)
+    fc = tf.keras.layers.Activation('relu')(fc)
+    fc = tf.keras.layers.Dropout(0.4)(fc)
+
+    fc = tf.keras.layers.Dense(256, kernel_regularizer=tf.keras.regularizers.l2(1e-4))(fc)
+    fc = tf.keras.layers.BatchNormalization()(fc)
+    fc = tf.keras.layers.Activation('relu')(fc)
+    fc = tf.keras.layers.Dropout(0.3)(fc)
+
+    fc = L2NormalizationLayer(axis=1)(fc)
+
+    return tf.keras.Model(base.input, fc, name="feature_extractor")
+
 def build_siamese(input_shape):
     print("--- DEFINE INPUT LAYERS")
     input_ref = tf.keras.Input(shape=(input_shape, input_shape, 3), name="reference")
     input_sketch = tf.keras.Input(shape=(input_shape, input_shape, 3), name="sketch")
 
     print("--- DEFINE SUB-NETWORK")
-    subnet = build_efficientnetv2m_subnetwork()
+    subnet = build_convnext_subnetwork()
     feat_ref = subnet(input_ref)
     feat_sketch = subnet(input_sketch)
 

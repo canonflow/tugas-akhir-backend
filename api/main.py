@@ -55,8 +55,8 @@ async def calculate_similarity(
     print("Images read successfully")
 
     # TODO: Convert bytes to PIL Image
-    reference_img = preprocessing_pipeline(reference_bytes)
-    sketch_img = preprocessing_pipeline(sketch_bytes)
+    reference_img = preprocessing_pipeline(reference_bytes, image_size=224)
+    sketch_img = preprocessing_pipeline(sketch_bytes, image_size=224)
     print("Images preprocessed successfully")
 
     # TODO: Calculate the similarity between reference image and sketch image
@@ -320,17 +320,17 @@ async def retrain_background(
 
 
         print("\n============================ PROCESS AND LOAD DATASET ============================")
-        X_train, y_train = create_processed_dataframe_from_csv('train', 256)
+        X_train, y_train = create_processed_dataframe_from_csv('train', 224)
         print(">> Processing Train Pairs")
 
-        X_valid, y_valid = create_processed_dataframe_from_csv("valid", 256)
+        X_valid, y_valid = create_processed_dataframe_from_csv("valid", 224)
         print(">> Processing Valid Pairs")
 
         print("\n============================ SETUP CALLBACK ============================")
         callbacks = build_callbacks()
 
         print("\n============================ SETUP MODEL ============================")
-        siamese_model = build_siamese(input_shape=256)
+        siamese_model = build_siamese(input_shape=224)
         history = siamese_model.fit(
             x=X_train,
             y=y_train,
@@ -360,7 +360,7 @@ async def retrain_background(
         print(f">> Training Metrics: {latest_metrics}")
 
         print("\n============================ PREDICT TEST SET ============================")
-        X_test, y_test = create_processed_dataframe_from_csv('test', 256)
+        X_test, y_test = create_processed_dataframe_from_csv('test', 224)
         predictions = siamese_model.predict(X_test, batch_size=32, verbose=1)
 
         if predictions.ndim > 1 and predictions.shape[1] == 1:
